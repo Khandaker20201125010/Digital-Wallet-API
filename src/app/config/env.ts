@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ override: true, quiet: true });
 
 interface EnvConfig {
  PORT : string,
