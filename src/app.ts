@@ -1,6 +1,8 @@
 import cors from "cors";
-import express,{Request,Response} from "express";
+import express,{NextFunction, Request,Response} from "express";
 import { router } from "./app/routes";
+import { envVars } from "./app/config/env";
+import { globalErrorHandler } from "./app/middlewares/globalErroHandeler";
 
 
 
@@ -18,5 +20,8 @@ app.get("/", (req:Request, res:Response) => {
     })
     
 })
+
+
+app.use(globalErrorHandler)
 
 export default app;
