@@ -27,9 +27,14 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
     role: isUserExist.role,
   };
   const accessToken = generateToken(jwtPayload, envVars.JWT_ACCESS_SECRET as string, envVars.JWT_ACCESS_EXPIRES as string);
+   
+
+  const refreshToken = generateToken(jwtPayload, envVars.JWT_REFRESH_SECRET as string, envVars.JWT_REFRESH_EXPIRES as string);
 
   return {
-   accessToken
+   accessToken,
+   refreshToken,
+   user : isUserExist,
   };
 };
 
