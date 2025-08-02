@@ -36,7 +36,7 @@ export interface IUser {
   isApproved?: boolean;
   isDeleted?: boolean;
   isVerified?: boolean;
-  auths?: IAuthProvider[];
+  auths: IAuthProvider[];
   agent?: Types.ObjectId[];
   createdAt?: Date;
   updatedAt?: Date;

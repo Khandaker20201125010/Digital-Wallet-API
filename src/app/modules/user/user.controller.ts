@@ -1,13 +1,9 @@
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import httpStatus from "http-status-codes";
 import { UserService } from "./user.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { JwtPayload } from "jsonwebtoken";
-
-
 
 // Create user
 
@@ -23,22 +19,24 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
 
 // Update user
 
-const updateUser = catchAsync(
-  async (req: Request, res: Response) => {
-    const userId = req.params.id;
+const updateUser = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.params.id;
 
-    const verifiedToken = req.user;
+  const verifiedToken = req.user;
 
-    const payload = req.body;
-    const user = await UserService.updateUser(userId, payload, verifiedToken as JwtPayload);
-    sendResponse(res, {
-      success: true,
-      message: "User Updated Successfully",
-      statusCode: httpStatus.CREATED,
-      data: user,
-    });
-  }
-);
+  const payload = req.body;
+  const user = await UserService.updateUser(
+    userId,
+    payload,
+    verifiedToken as JwtPayload
+  );
+  sendResponse(res, {
+    success: true,
+    message: "User Updated Successfully",
+    statusCode: httpStatus.CREATED,
+    data: user,
+  });
+});
 
 // Get all users
 
