@@ -4,7 +4,6 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { WalletService } from "./wallet.service";
 
-
 const getMyWallet = catchAsync(async (req: Request, res: Response) => {
   const userId = (req.user as { userId: string }).userId;
   const data = await WalletService.getFormattedWalletByUserId(userId);
