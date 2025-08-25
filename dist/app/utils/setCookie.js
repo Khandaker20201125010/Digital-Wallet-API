@@ -1,43 +1,32 @@
-import { Response } from "express"; 
-import { envVars } from "../config/env";
-
-export interface AuthTokens {
-    accessToken?: string
-    refreshToken?: string
-}
-
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.setAuthCookie = void 0;
+const env_1 = require("../config/env");
 // --------------------------it only use for production -------------------
-
-export const setAuthCookie = (res: Response, tokenInfo: AuthTokens) => {
+const setAuthCookie = (res, tokenInfo) => {
     if (tokenInfo.accessToken) {
         res.cookie("accessToken", tokenInfo.accessToken, {
             httpOnly: true,
-            secure: envVars.NODE_ENV === "production",
+            secure: env_1.envVars.NODE_ENV === "production",
             sameSite: "none"
-        })
+        });
     }
-
     if (tokenInfo.refreshToken) {
         res.cookie("refreshToken", tokenInfo.refreshToken, {
             httpOnly: true,
-            secure: envVars.NODE_ENV === "production",
+            secure: env_1.envVars.NODE_ENV === "production",
             sameSite: "none"
-        })
+        });
     }
-}
-
-
+};
+exports.setAuthCookie = setAuthCookie;
 // -----------------it only use for development----------------------- 
-
 // export const setAuthCookie = (res: Response, tokenInfo: AuthTokens) => {
-
 //     if (tokenInfo.accessToken) {
 //         res.cookie("accessToken", tokenInfo.accessToken, {
 //             httpOnly: true,
 //             secure: false,
 //         })
-
 //     }
 //     if (tokenInfo.refreshToken){
 //         res.cookie("refreshToken", tokenInfo.refreshToken, {
@@ -45,5 +34,4 @@ export const setAuthCookie = (res: Response, tokenInfo: AuthTokens) => {
 //             secure: false,
 //         })
 //     }
-
 // }

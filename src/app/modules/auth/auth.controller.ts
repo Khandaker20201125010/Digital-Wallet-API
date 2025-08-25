@@ -87,26 +87,70 @@ const logout = catchAsync(async (req: Request, res: Response) => {
     data: null,
   });
 });
-const resetPassword = catchAsync(async (req: Request, res: Response) => {
-  const newPassword = req.body.newPassword;
+const forgotPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.body;
 
-  const oldPassword = req.body.oldPassword;
+    await AuthService.forgotPassword(email);
 
-  const decodedToken = req.user;
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Email Sent Successfully",
+      data: null,
+    });
+  }
+);
+const setPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const decodedToken = req.user as JwtPayload;
+    const { password } = req.body;
 
-  await AuthService.resetPassword(
-    oldPassword,
-    newPassword,
-    decodedToken as JwtPayload
-  );
+    await AuthService.setPassword(decodedToken.userId, password);
 
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: "Password Reset Successfully",
-    data: null,
-  });
-});
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Password Changed Successfully",
+      data: null,
+    });
+  }
+);
+const changePassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const newPassword = req.body.newPassword;
+    const oldPassword = req.body.oldPassword;
+    const decodedToken = req.user;
+
+    await AuthService.changePassword(
+      oldPassword,
+      newPassword,
+      decodedToken as JwtPayload
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Password Changed Successfully",
+      data: null,
+    });
+  }
+);
+
+const resetPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const decodedToken = req.user;
+
+    await AuthService.resetPassword(req.body, decodedToken as JwtPayload);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Password Changed Successfully",
+      data: null,
+    });
+  }
+);
 const googleCallbackController = catchAsync(
   async (req: Request, res: Response) => {
     let redirectTo = req.query.state ? (req.query.state as string) : "";
@@ -135,4 +179,7 @@ export const AuthControllers = {
   logout,
   resetPassword,
   googleCallbackController,
+  forgotPassword,
+  changePassword,
+  setPassword,
 };
