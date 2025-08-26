@@ -42,7 +42,7 @@ const createUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
         provider: "credentials",
         providerId: email,
     };
-    const user = yield user_model_1.User.create(Object.assign({ email, password: hashedPassword, auths: [authProvider] }, rest));
+    const user = yield user_model_1.User.create(Object.assign({ email, password: hashedPassword, auths: [authProvider], role: payload.role }, rest));
     let wallet = null;
     if (user.role === user_interface_1.Role.USER || user.role === user_interface_1.Role.AGENT) {
         wallet = yield wallet_model_1.Wallet.create({
@@ -88,8 +88,15 @@ const getAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
         },
     };
 });
+const getMe = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield user_model_1.User.findById(userId).select("-password");
+    return {
+        data: user,
+    };
+});
 exports.UserService = {
     createUser,
     getAllUsers,
     updateUser,
+    getMe,
 };

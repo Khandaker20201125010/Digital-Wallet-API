@@ -136,17 +136,19 @@ const resetPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter
     });
 }));
 const googleCallbackController = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let redirectTo = req.query.state ? req.query.state : "";
-    if (redirectTo.startsWith("/")) {
-        redirectTo = redirectTo.slice(1);
-    }
+    const role = req.query.state; // state comes from frontend
     const user = req.user;
     if (!user) {
         throw new appError_1.default(http_status_codes_1.default.NOT_FOUND, "User Not Found");
     }
     const tokenInfo = (0, usersTokens_1.createUsersTokens)(user);
     (0, setCookie_1.setAuthCookie)(res, tokenInfo);
-    res.redirect(`${env_1.envVars.FRONTEND_URL}/${redirectTo}`);
+    // Always redirect to a fixed frontend route
+    // Pass role as query param if it exists
+    const redirectUrl = role
+        ? `${env_1.envVars.FRONTEND_URL}/?role=${role}`
+        : `${env_1.envVars.FRONTEND_URL}/`;
+    res.redirect(redirectUrl);
 }));
 exports.AuthControllers = {
     credentialsLogin,

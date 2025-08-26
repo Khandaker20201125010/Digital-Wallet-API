@@ -25,6 +25,7 @@ const createUser = async (payload: Partial<IUser>) => {
     email,
     password: hashedPassword,
     auths: [authProvider],
+    role: payload.role,
     ...rest,
   });
 
@@ -91,15 +92,15 @@ const getAllUsers = async () => {
 };
 
 const getMe = async (userId: string) => {
-    const user = await User.findById(userId).select("-password");
-    return {
-        data: user
-    }
+  const user = await User.findById(userId).select("-password");
+  return {
+    data: user,
+  };
 };
 
 export const UserService = {
   createUser,
   getAllUsers,
   updateUser,
-  getMe
+  getMe,
 };

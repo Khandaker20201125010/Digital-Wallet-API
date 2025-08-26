@@ -153,12 +153,7 @@ const resetPassword = catchAsync(
 );
 const googleCallbackController = catchAsync(
   async (req: Request, res: Response) => {
-    let redirectTo = req.query.state ? (req.query.state as string) : "";
-
-    if (redirectTo.startsWith("/")) {
-      redirectTo = redirectTo.slice(1);
-    }
-
+    const role = req.query.state as string | undefined; // state comes from frontend
     const user = req.user;
 
     if (!user) {
@@ -169,7 +164,13 @@ const googleCallbackController = catchAsync(
 
     setAuthCookie(res, tokenInfo);
 
-    res.redirect(`${envVars.FRONTEND_URL}/${redirectTo}`);
+    // Always redirect to a fixed frontend route
+    // Pass role as query param if it exists
+    const redirectUrl = role
+      ? `${envVars.FRONTEND_URL}/?role=${role}`
+      : `${envVars.FRONTEND_URL}/`;
+
+    res.redirect(redirectUrl);
   }
 );
 
