@@ -16,20 +16,22 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const app_1 = __importDefault(require("./app"));
 const env_1 = require("./app/config/env");
 const seedSuperAdmin_1 = require("./app/utils/seedSuperAdmin");
+const redis_config_1 = require("./app/config/redis.config");
 let server;
 const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield mongoose_1.default.connect(env_1.envVars.DB_URL);
-        console.log("connected to DB !!!");
+        console.log("Connected to DB!!");
         server = app_1.default.listen(env_1.envVars.PORT, () => {
-            console.log(`Server started on port ${env_1.envVars.PORT} `);
+            console.log(`Server is listening to port ${env_1.envVars.PORT}`);
         });
     }
-    catch (err) {
-        console.log(err);
+    catch (error) {
+        console.log(error);
     }
 });
 (() => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, redis_config_1.connectRedis)();
     yield startServer();
     yield (0, seedSuperAdmin_1.seedSuperAdmin)();
 }))();

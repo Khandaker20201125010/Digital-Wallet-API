@@ -22,11 +22,19 @@ const loadEnvVariables = () => {
         "GOOGLE_CLIENT_SECRET",
         "GOOGLE_CALLBACK_URL",
         "EXPRESS_SESSION_SECRET",
-        "FRONTEND_URL"
+        "FRONTEND_URL",
+        "REDIS_HOST",
+        "REDIS_PORT",
+        "REDIS_USERNAME",
+        "REDIS_PASSWORD",
+        "SMTP_PORT",
+        "SMTP_HOST",
+        "SMTP_USER",
+        "SMTP_FROM",
     ];
     requiredEnvVars.forEach((key) => {
         if (!process.env[key]) {
-            throw new Error(`Missing require environment variabl ${key}`);
+            throw new Error(`Missing require environment variable ${key}`);
         }
     });
     return {
@@ -44,7 +52,18 @@ const loadEnvVariables = () => {
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
         GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
         EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET,
-        FRONTEND_URL: process.env.FRONTEND_URL
+        FRONTEND_URL: process.env.FRONTEND_URL,
+        REDIS_HOST: process.env.REDIS_HOST,
+        REDIS_PORT: process.env.REDIS_PORT,
+        REDIS_USERNAME: process.env.REDIS_USERNAME,
+        REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+        EMAIL_SENDER: {
+            SMTP_USER: process.env.SMTP_USER,
+            SMTP_PASS: process.env.SMTP_PASS,
+            SMTP_PORT: process.env.SMTP_PORT,
+            SMTP_HOST: process.env.SMTP_HOST,
+            SMTP_FROM: process.env.SMTP_FROM,
+        },
     };
 };
 exports.envVars = loadEnvVariables();

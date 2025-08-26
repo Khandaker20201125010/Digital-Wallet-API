@@ -5,17 +5,16 @@ import path from "path";
 import { envVars } from "../config/env";
 import AppError from "../errroHelpers/appError";
 
-
 const transporter = nodemailer.createTransport({
-    // port: envVars.EMAIL_SENDER.SMTP_PORT,
-    secure: true,
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: Number(process.env.SMTP_PORT) === 465,
     auth: {
-        user: envVars.EMAIL_SENDER.SMTP_USER,
-        pass: envVars.EMAIL_SENDER.SMTP_PASS
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
     },
-    port: Number(envVars.EMAIL_SENDER.SMTP_PORT),
-    host: envVars.EMAIL_SENDER.SMTP_HOST
-})
+});
+
 
 interface SendEmailOptions {
     to: string,
@@ -37,7 +36,9 @@ export const sendEmail = async ({
     attachments
 }: SendEmailOptions) => {
     try {
-        const templatePath = path.join(__dirname, `templates/${templateName}.ejs`)
+   const templatePath = path.join(process.cwd(), 'dist/app/utils/templates', `${templateName}.ejs`);
+
+
         const html = await ejs.renderFile(templatePath, templateData)
         const info = await transporter.sendMail({
             from: envVars.EMAIL_SENDER.SMTP_FROM,

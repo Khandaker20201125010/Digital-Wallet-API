@@ -92,15 +92,46 @@ const logout = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void
         data: null,
     });
 }));
-const resetPassword = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const newPassword = req.body.newPassword;
-    const oldPassword = req.body.oldPassword;
-    const decodedToken = req.user;
-    yield auth_service_1.AuthService.resetPassword(oldPassword, newPassword, decodedToken);
+const forgotPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    yield auth_service_1.AuthService.forgotPassword(email);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.OK,
-        message: "Password Reset Successfully",
+        message: "Email Sent Successfully",
+        data: null,
+    });
+}));
+const setPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const decodedToken = req.user;
+    const { password } = req.body;
+    yield auth_service_1.AuthService.setPassword(decodedToken.userId, password);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Password Changed Successfully",
+        data: null,
+    });
+}));
+const changePassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const newPassword = req.body.newPassword;
+    const oldPassword = req.body.oldPassword;
+    const decodedToken = req.user;
+    yield auth_service_1.AuthService.changePassword(oldPassword, newPassword, decodedToken);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Password Changed Successfully",
+        data: null,
+    });
+}));
+const resetPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const decodedToken = req.user;
+    yield auth_service_1.AuthService.resetPassword(req.body, decodedToken);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Password Changed Successfully",
         data: null,
     });
 }));
@@ -123,4 +154,7 @@ exports.AuthControllers = {
     logout,
     resetPassword,
     googleCallbackController,
+    forgotPassword,
+    changePassword,
+    setPassword,
 };

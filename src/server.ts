@@ -9,18 +9,19 @@ import { connectRedis } from "./app/config/redis.config";
 let server: Server;
 
 const startServer = async () => {
-  try {
-    await mongoose.connect(envVars.DB_URL);
+    try {
+        await mongoose.connect(envVars.DB_URL)
 
-    console.log("connected to DB !!!");
+        console.log("Connected to DB!!");
 
-    server = app.listen(envVars.PORT, () => {
-      console.log(`Server started on port ${envVars.PORT} `);
-    });
-  } catch (err) {
-    console.log(err);
-  }
-};
+        server = app.listen(envVars.PORT, () => {
+            console.log(`Server is listening to port ${envVars.PORT}`);
+        });
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 (async () => {
   await connectRedis()
   await startServer();
