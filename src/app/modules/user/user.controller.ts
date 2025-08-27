@@ -4,6 +4,7 @@ import { UserService } from "./user.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { JwtPayload } from "jsonwebtoken";
+import AppError from "../../errroHelpers/appError";
 
 // Create user
 
@@ -20,20 +21,24 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
 // Update user
 
 const updateUser = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.params.id;
+  const userId = (req.user as JwtPayload)?.userId;
 
-  const verifiedToken = req.user;
+  if (!userId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
+  }
 
   const payload = req.body;
+
   const user = await UserService.updateUser(
     userId,
     payload,
-    verifiedToken as JwtPayload
+    req.user as JwtPayload
   );
+
   sendResponse(res, {
     success: true,
     message: "User Updated Successfully",
-    statusCode: httpStatus.CREATED,
+    statusCode: httpStatus.OK, // Changed from CREATED to OK for updates
     data: user,
   });
 });
@@ -53,20 +58,20 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMe = catchAsync(async (req: Request, res: Response) => {
-    const decodedToken = req.user as JwtPayload
-    const result = await UserService.getMe(decodedToken.userId);
+  const decodedToken = req.user as JwtPayload;
+  const result = await UserService.getMe(decodedToken.userId);
 
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.CREATED,
-        message: "Your profile Retrieved Successfully",
-        data: result.data
-    })
-})
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: "Your profile Retrieved Successfully",
+    data: result.data,
+  });
+});
 
 export const userController = {
   createUser,
   getAllUsers,
   updateUser,
-  getMe
+  getMe,
 };

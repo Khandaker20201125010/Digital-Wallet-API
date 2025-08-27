@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
@@ -10,6 +11,7 @@ import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env";
 import { createUsersTokens } from "../../utils/usersTokens";
 import passport from "passport";
+import { User } from "../user/user.model";
 
 // Login with credentials
 const credentialsLogin = catchAsync(
@@ -71,13 +73,13 @@ const getNewAccessToken = catchAsync(async (req: Request, res: Response) => {
 const logout = catchAsync(async (req: Request, res: Response) => {
   res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
   });
   res.clearCookie("refreshToken", {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
   });
 
   sendResponse(res, {
@@ -151,28 +153,44 @@ const resetPassword = catchAsync(
     });
   }
 );
-const googleCallbackController = catchAsync(
-  async (req: Request, res: Response) => {
-    const role = req.query.state as string | undefined; // state comes from frontend
-    const user = req.user;
+export const googleCallbackController = async (req: Request, res: Response) => {
+  const user: any = req.user;
 
-    if (!user) {
-      throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
-    }
-
+  if (user) {
     const tokenInfo = createUsersTokens(user);
-
     setAuthCookie(res, tokenInfo);
 
-    // Always redirect to a fixed frontend route
-    // Pass role as query param if it exists
-    const redirectUrl = role
-      ? `${envVars.FRONTEND_URL}/?role=${role}`
-      : `${envVars.FRONTEND_URL}/`;
-
-    res.redirect(redirectUrl);
+    // ⬇️ Pass "newUser" flag + email in redirect
+    const isNewUser = user._newUser ? "true" : "false";
+    return res.redirect(
+      `${envVars.FRONTEND_URL}/?newUser=${isNewUser}&email=${user.email}`
+    );
   }
-);
+
+  throw new AppError(httpStatus.BAD_REQUEST, "Google login failed");
+};
+
+
+export const checkUserExists = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    console.log("❌ No email provided");
+    res.status(400).json({ exists: false, message: "Email is required" });
+    return;
+  }
+
+  const user = await User.findOne({ email });
+  console.log("🔍 checkUserExists:", email, "→", user ? "FOUND" : "NOT FOUND");
+
+  if (user) {
+    res.status(200).json({ exists: true });
+    return;
+  }
+
+  res.status(200).json({ exists: false });
+});
+
 
 export const AuthControllers = {
   credentialsLogin,
@@ -183,4 +201,5 @@ export const AuthControllers = {
   forgotPassword,
   changePassword,
   setPassword,
+  checkUserExists,
 };

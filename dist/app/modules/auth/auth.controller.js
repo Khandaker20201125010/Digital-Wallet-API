@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthControllers = void 0;
+exports.AuthControllers = exports.checkUserExists = exports.googleCallbackController = void 0;
 const catchAsync_1 = require("../../utils/catchAsync");
 const sendResponse_1 = require("../../utils/sendResponse");
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
@@ -33,6 +33,7 @@ const setCookie_1 = require("../../utils/setCookie");
 const env_1 = require("../../config/env");
 const usersTokens_1 = require("../../utils/usersTokens");
 const passport_1 = __importDefault(require("passport"));
+const user_model_1 = require("../user/user.model");
 // Login with credentials
 const credentialsLogin = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     // const loginInfo = await AuthServices.credentialsLogin(req.body)
@@ -77,13 +78,13 @@ const getNewAccessToken = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(v
 const logout = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.clearCookie("accessToken", {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
     });
     res.clearCookie("refreshToken", {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
     });
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
@@ -135,28 +136,41 @@ const resetPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter
         data: null,
     });
 }));
-const googleCallbackController = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const role = req.query.state; // state comes from frontend
+const googleCallbackController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.user;
-    if (!user) {
-        throw new appError_1.default(http_status_codes_1.default.NOT_FOUND, "User Not Found");
+    if (user) {
+        const tokenInfo = (0, usersTokens_1.createUsersTokens)(user);
+        (0, setCookie_1.setAuthCookie)(res, tokenInfo);
+        // ⬇️ Pass "newUser" flag + email in redirect
+        const isNewUser = user._newUser ? "true" : "false";
+        return res.redirect(`${env_1.envVars.FRONTEND_URL}/?newUser=${isNewUser}&email=${user.email}`);
     }
-    const tokenInfo = (0, usersTokens_1.createUsersTokens)(user);
-    (0, setCookie_1.setAuthCookie)(res, tokenInfo);
-    // Always redirect to a fixed frontend route
-    // Pass role as query param if it exists
-    const redirectUrl = role
-        ? `${env_1.envVars.FRONTEND_URL}/?role=${role}`
-        : `${env_1.envVars.FRONTEND_URL}/`;
-    res.redirect(redirectUrl);
+    throw new appError_1.default(http_status_codes_1.default.BAD_REQUEST, "Google login failed");
+});
+exports.googleCallbackController = googleCallbackController;
+exports.checkUserExists = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    if (!email) {
+        console.log("❌ No email provided");
+        res.status(400).json({ exists: false, message: "Email is required" });
+        return;
+    }
+    const user = yield user_model_1.User.findOne({ email });
+    console.log("🔍 checkUserExists:", email, "→", user ? "FOUND" : "NOT FOUND");
+    if (user) {
+        res.status(200).json({ exists: true });
+        return;
+    }
+    res.status(200).json({ exists: false });
 }));
 exports.AuthControllers = {
     credentialsLogin,
     getNewAccessToken,
     logout,
     resetPassword,
-    googleCallbackController,
+    googleCallbackController: exports.googleCallbackController,
     forgotPassword,
     changePassword,
     setPassword,
+    checkUserExists: exports.checkUserExists,
 };

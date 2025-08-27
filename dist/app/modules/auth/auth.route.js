@@ -11,6 +11,7 @@ const user_interface_1 = require("../user/user.interface");
 const passport_1 = __importDefault(require("passport"));
 require("../../config/passport");
 const router = (0, express_1.Router)();
+router.post('/check-user', auth_controller_1.AuthControllers.checkUserExists);
 router.post("/login", auth_controller_1.AuthControllers.credentialsLogin);
 router.post("/refresh-token", auth_controller_1.AuthControllers.getNewAccessToken);
 router.post("/logout", auth_controller_1.AuthControllers.logout);

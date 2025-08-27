@@ -91,7 +91,7 @@ const getAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
 const getMe = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findById(userId).select("-password");
     return {
-        data: user,
+        data: user
     };
 });
 exports.UserService = {

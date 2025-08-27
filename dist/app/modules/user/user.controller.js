@@ -17,6 +17,7 @@ const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const user_service_1 = require("./user.service");
 const catchAsync_1 = require("../../utils/catchAsync");
 const sendResponse_1 = require("../../utils/sendResponse");
+const appError_1 = __importDefault(require("../../errroHelpers/appError"));
 // Create user
 const createUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_service_1.UserService.createUser(req.body);
@@ -29,14 +30,17 @@ const createUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, 
 }));
 // Update user
 const updateUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const userId = req.params.id;
-    const verifiedToken = req.user;
+    var _a;
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+    if (!userId) {
+        throw new appError_1.default(http_status_codes_1.default.UNAUTHORIZED, "User not authenticated");
+    }
     const payload = req.body;
-    const user = yield user_service_1.UserService.updateUser(userId, payload, verifiedToken);
+    const user = yield user_service_1.UserService.updateUser(userId, payload, req.user);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         message: "User Updated Successfully",
-        statusCode: http_status_codes_1.default.CREATED,
+        statusCode: http_status_codes_1.default.OK, // Changed from CREATED to OK for updates
         data: user,
     });
 }));
@@ -58,12 +62,12 @@ const getMe = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 
         success: true,
         statusCode: http_status_codes_1.default.CREATED,
         message: "Your profile Retrieved Successfully",
-        data: result.data
+        data: result.data,
     });
 }));
 exports.userController = {
     createUser,
     getAllUsers,
     updateUser,
-    getMe
+    getMe,
 };

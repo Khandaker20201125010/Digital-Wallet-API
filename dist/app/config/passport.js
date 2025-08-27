@@ -50,32 +50,47 @@ passport_1.default.use(new passport_google_oauth20_1.Strategy({
     clientID: env_1.envVars.GOOGLE_CLIENT_ID,
     clientSecret: env_1.envVars.GOOGLE_CLIENT_SECRET,
     callbackURL: env_1.envVars.GOOGLE_CALLBACK_URL,
-    passReqToCallback: true, // 👈 enable request access
-}, (req, accessToken, refreshToken, profile, done) => __awaiter(void 0, void 0, void 0, function* () {
+}, (accessToken, refreshToken, profile, done) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
         const email = (_a = profile.emails) === null || _a === void 0 ? void 0 : _a[0].value;
         if (!email) {
-            return done(null, false, {
-                message: "No email found in Google profile",
-            });
+            return done(null, false, { mesaage: "No email found" });
         }
-        let user = yield user_model_1.User.findOne({ email });
-        if (!user) {
-            let role = user_interface_1.Role.USER;
-            if (req.query.state && req.query.state.startsWith("role=")) {
-                role = req.query.state.split("=")[1].toUpperCase();
-            }
-            user = yield user_model_1.User.create({
+        let isUserExist = yield user_model_1.User.findOne({ email });
+        if (isUserExist && !isUserExist.isVerified) {
+            // throw new AppError(httpStatus.BAD_REQUEST, "User is not verified")
+            // done("User is not verified")
+            return done(null, false, { message: "User is not verified" });
+        }
+        if (isUserExist &&
+            (isUserExist.isActive === user_interface_1.IsActive.BLOCKED ||
+                isUserExist.isActive === user_interface_1.IsActive.INACTIVE)) {
+            // throw new AppError(httpStatus.BAD_REQUEST, `User is ${isUserExist.isActive}`)
+            done(`User is ${isUserExist.isActive}`);
+        }
+        if (isUserExist && isUserExist.isDeleted) {
+            return done(null, false, { message: "User is deleted" });
+            // done("User is deleted")
+        }
+        if (!isUserExist) {
+            isUserExist = yield user_model_1.User.create({
                 email,
                 name: profile.displayName,
                 picture: (_b = profile.photos) === null || _b === void 0 ? void 0 : _b[0].value,
-                role, // set role only on create
+                role: null, // 🚨 no role yet
                 isVerified: true,
-                auths: [{ provider: "google", providerId: profile.id }],
+                auths: [
+                    {
+                        provider: "google",
+                        providerId: profile.id,
+                    },
+                ],
             });
+            // mark as new user (not saved in DB, just for redirect info)
+            isUserExist._newUser = true;
         }
-        return done(null, user);
+        return done(null, isUserExist);
     }
     catch (error) {
         console.log("Google Strategy Error", error);
