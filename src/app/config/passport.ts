@@ -7,7 +7,7 @@ import {
 } from "passport-google-oauth20";
 import { envVars } from "./env";
 import { User } from "../modules/user/user.model";
-import { IsActive } from "../modules/user/user.interface";
+import { IsActive, Role } from "../modules/user/user.interface";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcryptjs from "bcryptjs";
 
@@ -100,7 +100,7 @@ passport.use(
             email,
             name: profile.displayName,
             picture: profile.photos?.[0].value,
-            role: null, // 🚨 no role yet
+            role: Role.USER, // ✅ default role
             isVerified: true,
             auths: [
               {
@@ -110,8 +110,7 @@ passport.use(
             ],
           });
 
-          // mark as new user (not saved in DB, just for redirect info)
-          (isUserExist as any)._newUser = true;
+          (isUserExist as any)._newUser = true; // still mark as new
         }
 
         return done(null, isUserExist);

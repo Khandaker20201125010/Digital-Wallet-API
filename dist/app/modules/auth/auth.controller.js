@@ -163,6 +163,26 @@ exports.checkUserExists = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(v
     }
     res.status(200).json({ exists: false });
 }));
+const updateUserByEmail = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("📩 updateUserByEmail called with body:", req.body);
+    const { email, role } = req.body;
+    if (!email || !role) {
+        console.error("❌ Missing email or role:", { email, role });
+        throw new appError_1.default(400, 'Email and role are required');
+    }
+    const user = yield user_model_1.User.findOneAndUpdate({ email }, { role }, { new: true });
+    if (!user) {
+        console.error("❌ No user found for email:", email);
+        throw new appError_1.default(404, 'User not found');
+    }
+    console.log("✅ User updated:", user);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: 200,
+        success: true,
+        message: 'User updated successfully',
+        data: user,
+    });
+}));
 exports.AuthControllers = {
     credentialsLogin,
     getNewAccessToken,
@@ -173,4 +193,5 @@ exports.AuthControllers = {
     changePassword,
     setPassword,
     checkUserExists: exports.checkUserExists,
+    updateUserByEmail
 };

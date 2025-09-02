@@ -78,7 +78,7 @@ passport_1.default.use(new passport_google_oauth20_1.Strategy({
                 email,
                 name: profile.displayName,
                 picture: (_b = profile.photos) === null || _b === void 0 ? void 0 : _b[0].value,
-                role: null, // 🚨 no role yet
+                role: user_interface_1.Role.USER, // ✅ default role
                 isVerified: true,
                 auths: [
                     {
@@ -87,8 +87,7 @@ passport_1.default.use(new passport_google_oauth20_1.Strategy({
                     },
                 ],
             });
-            // mark as new user (not saved in DB, just for redirect info)
-            isUserExist._newUser = true;
+            isUserExist._newUser = true; // still mark as new
         }
         return done(null, isUserExist);
     }

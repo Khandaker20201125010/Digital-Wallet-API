@@ -45,4 +45,6 @@ router.get(
   AuthControllers.googleCallbackController
 );
 
+router.patch('/update-by-email', AuthControllers.updateUserByEmail);
+
 export const AuthRoutes = router;

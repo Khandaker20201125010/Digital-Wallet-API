@@ -28,4 +28,5 @@ router.get("/google", (req, res, next) => {
     })(req, res, next);
 });
 router.get("/google/callback", passport_1.default.authenticate("google", { failureRedirect: "/login" }), auth_controller_1.AuthControllers.googleCallbackController);
+router.patch('/update-by-email', auth_controller_1.AuthControllers.updateUserByEmail);
 exports.AuthRoutes = router;

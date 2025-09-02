@@ -191,6 +191,38 @@ export const checkUserExists = catchAsync(async (req: Request, res: Response) =>
   res.status(200).json({ exists: false });
 });
 
+const updateUserByEmail = catchAsync(async (req, res) => {
+  console.log("📩 updateUserByEmail called with body:", req.body);
+
+  const { email, role } = req.body;
+
+  if (!email || !role) {
+    console.error("❌ Missing email or role:", { email, role });
+    throw new AppError(400, 'Email and role are required');
+  }
+
+  const user = await User.findOneAndUpdate(
+    { email },
+    { role },
+    { new: true }
+  );
+
+  if (!user) {
+    console.error("❌ No user found for email:", email);
+    throw new AppError(404, 'User not found');
+  }
+
+  console.log("✅ User updated:", user);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User updated successfully',
+    data: user,
+  });
+});
+
+
 
 export const AuthControllers = {
   credentialsLogin,
@@ -202,4 +234,5 @@ export const AuthControllers = {
   changePassword,
   setPassword,
   checkUserExists,
+  updateUserByEmail
 };
