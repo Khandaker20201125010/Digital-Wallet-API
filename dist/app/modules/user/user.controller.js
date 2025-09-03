@@ -17,7 +17,6 @@ const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const user_service_1 = require("./user.service");
 const catchAsync_1 = require("../../utils/catchAsync");
 const sendResponse_1 = require("../../utils/sendResponse");
-const appError_1 = __importDefault(require("../../errroHelpers/appError"));
 // Create user
 const createUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_service_1.UserService.createUser(req.body);
@@ -29,18 +28,28 @@ const createUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, 
     });
 }));
 // Update user
+// Update the updateUser function to handle file uploads
 const updateUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
-    if (!userId) {
-        throw new appError_1.default(http_status_codes_1.default.UNAUTHORIZED, "User not authenticated");
+    let userId;
+    // Handle both /:id and /me routes
+    if (req.params.id) {
+        userId = req.params.id;
+    }
+    else {
+        // For /me route, use the authenticated user's ID
+        const verifiedToken = req.user;
+        userId = verifiedToken.userId;
     }
     const payload = req.body;
+    // If a file was uploaded, add the file path to the payload
+    if (req.file) {
+        payload.picture = req.file.path; // Cloudinary returns the file path
+    }
     const user = yield user_service_1.UserService.updateUser(userId, payload, req.user);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
+        statusCode: http_status_codes_1.default.OK, // Use OK (200) instead of CREATED (201) for updates
         message: "User Updated Successfully",
-        statusCode: http_status_codes_1.default.OK, // Changed from CREATED to OK for updates
         data: user,
     });
 }));

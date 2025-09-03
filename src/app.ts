@@ -9,6 +9,9 @@ import passport from "passport";
 import { envVars } from "./app/config/env";
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(
   expressSession({
     secret: envVars.EXPRESS_SESSION_SECRET,
@@ -16,10 +19,9 @@ app.use(
     saveUninitialized: false,
   })
 );
-app.use(cookieParser());
-app.use(express.json());
+
 app.set("trust proxy", 1);
-app.use(express.urlencoded({ extended: true }));
+
 app.use(
   cors({
     origin: envVars.FRONTEND_URL,

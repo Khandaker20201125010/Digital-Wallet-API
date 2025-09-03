@@ -50,21 +50,26 @@ const changePassword = async (
 ) => {
   const user = await User.findById(decodedToken.userId);
 
-  const isOldPasswordMatch = await bcryptjs.compare(
-    oldPassword,
-    user!.password as string
-  );
-  if (!isOldPasswordMatch) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "Old Password does not match");
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  user!.password = await bcryptjs.hash(
+  const isOldPasswordMatch = await bcryptjs.compare(
+    oldPassword,
+    user.password as string
+  );
+  if (!isOldPasswordMatch) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Old password does not match");
+  }
+
+  user.password = await bcryptjs.hash(
     newPassword,
     Number(envVars.BCRYPT_SALT_ROUND)
   );
 
-  user!.save();
+  await user.save();
 };
+
 
 const setPassword = async (userId: string, plainPassword: string) => {
   const user = await User.findById(userId);

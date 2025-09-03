@@ -30,6 +30,7 @@ export const createUserZodSchema = z.object({
         "Phone number must be valid for Bangladesh. Format: +8801XXXXXXXXX or 01XXXXXXXXX",
     })
     .optional(),
+    picture: z.any().optional(),
 });
 export const updateUserZodSchema = z.object({
   name: z
@@ -69,4 +70,5 @@ export const updateUserZodSchema = z.object({
     .string({ invalid_type_error: "Address must be string" })
     .max(200, { message: "Address cannot exceed 200 characters." })
     .optional(),
+  picture: z.any().optional().nullable(),
 });

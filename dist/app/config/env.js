@@ -27,10 +27,14 @@ const loadEnvVariables = () => {
         "REDIS_PORT",
         "REDIS_USERNAME",
         "REDIS_PASSWORD",
+        "SMTP_PASS",
         "SMTP_PORT",
         "SMTP_HOST",
         "SMTP_USER",
         "SMTP_FROM",
+        "CLOUDINARY_CLOUD_NAME",
+        "CLOUDINARY_API_KEY",
+        "CLOUDINARY_API_SECRET",
     ];
     requiredEnvVars.forEach((key) => {
         if (!process.env[key]) {
@@ -63,6 +67,11 @@ const loadEnvVariables = () => {
             SMTP_PORT: process.env.SMTP_PORT,
             SMTP_HOST: process.env.SMTP_HOST,
             SMTP_FROM: process.env.SMTP_FROM,
+        },
+        CLOUDINARY: {
+            CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+            CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+            CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
         },
     };
 };

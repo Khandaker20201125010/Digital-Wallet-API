@@ -44,12 +44,15 @@ const resetPassword = (payload, decodedToken) => __awaiter(void 0, void 0, void 
 });
 const changePassword = (oldPassword, newPassword, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findById(decodedToken.userId);
+    if (!user) {
+        throw new appError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
+    }
     const isOldPasswordMatch = yield bcryptjs_1.default.compare(oldPassword, user.password);
     if (!isOldPasswordMatch) {
-        throw new appError_1.default(http_status_codes_1.default.UNAUTHORIZED, "Old Password does not match");
+        throw new appError_1.default(http_status_codes_1.default.UNAUTHORIZED, "Old password does not match");
     }
     user.password = yield bcryptjs_1.default.hash(newPassword, Number(env_1.envVars.BCRYPT_SALT_ROUND));
-    user.save();
+    yield user.save();
 });
 const setPassword = (userId, plainPassword) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findById(userId);

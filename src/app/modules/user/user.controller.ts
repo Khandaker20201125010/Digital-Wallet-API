@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import httpStatus from "http-status-codes";
 import { UserService } from "./user.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { JwtPayload } from "jsonwebtoken";
-import AppError from "../../errroHelpers/appError";
+
 
 // Create user
 
@@ -20,27 +21,34 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
 
 // Update user
 
+// Update the updateUser function to handle file uploads
 const updateUser = catchAsync(async (req: Request, res: Response) => {
-  const userId = (req.user as JwtPayload)?.userId;
+    let userId;
+    
+    // Handle both /:id and /me routes
+    if (req.params.id) {
+        userId = req.params.id;
+    } else {
+        // For /me route, use the authenticated user's ID
+        const verifiedToken = req.user as JwtPayload;
+        userId = verifiedToken.userId;
+    }
 
-  if (!userId) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
-  }
+    const payload = req.body;
+    
+    // If a file was uploaded, add the file path to the payload
+    if (req.file) {
+        payload.picture = (req.file as any).path; // Cloudinary returns the file path
+    }
 
-  const payload = req.body;
+    const user = await UserService.updateUser(userId, payload, req.user as JwtPayload);
 
-  const user = await UserService.updateUser(
-    userId,
-    payload,
-    req.user as JwtPayload
-  );
-
-  sendResponse(res, {
-    success: true,
-    message: "User Updated Successfully",
-    statusCode: httpStatus.OK, // Changed from CREATED to OK for updates
-    data: user,
-  });
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK, // Use OK (200) instead of CREATED (201) for updates
+        message: "User Updated Successfully",
+        data: user,
+    });
 });
 
 // Get all users

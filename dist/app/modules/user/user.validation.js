@@ -34,6 +34,7 @@ exports.createUserZodSchema = zod_1.default.object({
         message: "Phone number must be valid for Bangladesh. Format: +8801XXXXXXXXX or 01XXXXXXXXX",
     })
         .optional(),
+    picture: zod_1.default.any().optional(),
 });
 exports.updateUserZodSchema = zod_1.default.object({
     name: zod_1.default
@@ -72,4 +73,5 @@ exports.updateUserZodSchema = zod_1.default.object({
         .string({ invalid_type_error: "Address must be string" })
         .max(200, { message: "Address cannot exceed 200 characters." })
         .optional(),
+    picture: zod_1.default.any().optional().nullable(),
 });
