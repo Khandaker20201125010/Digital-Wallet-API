@@ -4,13 +4,13 @@ import { TransactionService } from "./transaction.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status-codes";
 
+// transaction.controller.ts
 const createTransaction = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as { userId: string; role: string };
 
   const payload = {
     ...req.body,
     from: user.userId,
-    to: user.userId, 
     initiatedBy: user.userId,
     initiatedRole: user.role.toLowerCase(),
     reference: `TXN-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
@@ -25,6 +25,8 @@ const createTransaction = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+
 
 const getMyTransactions = catchAsync(async (req: Request, res: Response) => {
   const userId = (req.user as { userId: string }).userId;

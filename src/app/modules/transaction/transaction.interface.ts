@@ -5,7 +5,7 @@ export type TransactionType = "add_money" | "withdraw" | "send" | "cash_in" | "c
 export type TransactionStatus = "pending" | "completed" | "failed" | "reversed";
 
 export interface ITransaction {
-  from?: Types.ObjectId;                   
+  from: Types.ObjectId;                   
   to?: Types.ObjectId;                     
   type: TransactionType;                  
   amount: number;                          

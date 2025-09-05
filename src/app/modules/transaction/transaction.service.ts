@@ -5,6 +5,7 @@ import { Transaction } from "./transaction.model";
 import { calculateFee } from "../../utils/feeCalculator";
 import { notify } from "../../utils/notifier";
 
+// transaction.service.ts
 const createTransaction = async (payload: ITransaction) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -21,83 +22,52 @@ const createTransaction = async (payload: ITransaction) => {
 
     const senderWallet = await Wallet.findOne({ user: from }).session(session);
     if (!senderWallet) throw new Error("Sender wallet not found");
+    if (senderWallet.status === "blocked") throw new Error("Sender wallet is blocked");
 
-    if (senderWallet.status === "blocked") {
-      throw new Error("Sender wallet is blocked. Transaction not allowed.");
-    }
-    // calculate fee
-    const fee = calculateFee(type, amount);
+    const userWallet = to ? await Wallet.findOne({ user: to }).session(session) : null;
 
-    // total deduction from sender if applicable
-    const totalDebit = amount + fee;
+    // Fee depends on role
+    const fee = calculateFee(type, amount, initiatedRole as "user" | "agent");
 
-    // Deduct from sender
-    if (["send", "withdraw", "cash_out"].includes(type)) {
-      if (senderWallet.balance < totalDebit) {
-        throw new Error("Insufficient balance (including fee)");
-      }
-      senderWallet.balance -= totalDebit;
-      await senderWallet.save({ session });
-    }
-
-    // Special case for cash_out from target wallet
+    // Handle different cases
     if (type === "cash_out") {
-      if (!to) throw new Error("Target user is required for cash_out");
+      if (!userWallet) throw new Error("Target user is required for cash_out");
+      if (userWallet.status === "blocked") throw new Error("Target user's wallet is blocked");
+      if (userWallet.balance < amount) throw new Error("User has insufficient balance");
 
-      const userWallet = await Wallet.findOne({ user: to }).session(session);
-      if (!userWallet) throw new Error("User wallet not found for cash_out");
-
-      if (userWallet.status === "blocked") {
-        throw new Error("Target user's wallet is blocked. Cannot cash out.");
-      }
-
-      if (userWallet.balance < amount) {
-        throw new Error("User has insufficient balance for cash_out");
-      }
-
+      // Deduct only from user
       userWallet.balance -= amount;
       await userWallet.save({ session });
-    }
 
-    // Deposit to receiver (if any)
-    if (["send", "add_money", "cash_in"].includes(type)) {
-      if (to) {
-        const receiverWallet = await Wallet.findOne({ user: to }).session(
-          session
-        );
-        if (!receiverWallet) throw new Error("Receiver wallet not found");
-
-        if (receiverWallet.status === "blocked") {
-          throw new Error(
-            "Receiver wallet is blocked. Transaction not allowed."
-          );
-        }
-
-        receiverWallet.balance += amount;
-        await receiverWallet.save({ session });
-      } else if (type === "add_money") {
-        senderWallet.balance += amount;
+      // Deduct fee from agent if agent is performing withdrawal
+      if (initiatedRole === "agent" && senderWallet.user.toString() !== to?.toString()) {
+        if (senderWallet.balance < fee) throw new Error("Agent has insufficient balance for fee");
+        senderWallet.balance -= fee;
         await senderWallet.save({ session });
       }
     }
 
-    const transaction = await Transaction.create(
-      [
-        {
-          ...payload,
-          fee,
-        },
-      ],
-      { session }
-    );
+    // Other transaction types (add_money, send, etc.)
+    if (["send", "add_money", "cash_in", "withdraw"].includes(type)) {
+      let totalDebit = amount;
+      if (initiatedRole === "user") totalDebit += fee; // fee for user
+      if (senderWallet.balance < totalDebit) throw new Error("Insufficient balance including fee");
+      senderWallet.balance -= totalDebit;
+      await senderWallet.save({ session });
 
-    // Notify sender and receiver
-    notify(
-      from ? from.toString() : "unknown",
-      `Transaction of ${amount} (${type}) successful. Fee: ${fee}`
-    );
+      if (to) {
+        const receiverWallet = await Wallet.findOne({ user: to }).session(session);
+        if (!receiverWallet) throw new Error("Receiver wallet not found");
+        receiverWallet.balance += amount;
+        await receiverWallet.save({ session });
+      }
+    }
+
+    const transaction = await Transaction.create([{ ...payload, fee }], { session });
+
+    notify(from.toString(), `Transaction of ${amount} (${type}) successful. Fee: ${fee}`);
     if (to && ["send", "cash_in", "add_money"].includes(type)) {
-      notify(to.toString(), `You received ৳${amount} via ${type}`);
+      notify(to.toString(), `You received ₹${amount} via ${type}`);
     }
 
     await session.commitTransaction();
@@ -110,6 +80,7 @@ const createTransaction = async (payload: ITransaction) => {
     throw error;
   }
 };
+
 
 const getMyTransactions = async (userId: string) => {
   return await Transaction.find({
