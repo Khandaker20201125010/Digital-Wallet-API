@@ -19,7 +19,7 @@ const sendResponse_1 = require("../../utils/sendResponse");
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const createTransaction = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.user;
-    const payload = Object.assign(Object.assign({}, req.body), { from: user.userId, initiatedBy: user.userId, initiatedRole: user.role.toLowerCase(), reference: `TXN-${Date.now()}-${Math.floor(Math.random() * 100000)}` });
+    const payload = Object.assign(Object.assign({}, req.body), { from: user.userId, to: user.userId, initiatedBy: user.userId, initiatedRole: user.role.toLowerCase(), reference: `TXN-${Date.now()}-${Math.floor(Math.random() * 100000)}` });
     const result = yield transaction_service_1.TransactionService.createTransaction(payload);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: http_status_codes_1.default.CREATED,

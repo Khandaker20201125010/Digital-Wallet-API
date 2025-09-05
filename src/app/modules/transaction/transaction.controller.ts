@@ -10,6 +10,7 @@ const createTransaction = catchAsync(async (req: Request, res: Response) => {
   const payload = {
     ...req.body,
     from: user.userId,
+    to: user.userId, 
     initiatedBy: user.userId,
     initiatedRole: user.role.toLowerCase(),
     reference: `TXN-${Date.now()}-${Math.floor(Math.random() * 100000)}`,

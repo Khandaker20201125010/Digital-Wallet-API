@@ -10,6 +10,7 @@ import { User } from "../modules/user/user.model";
 import { IsActive, Role } from "../modules/user/user.interface";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcryptjs from "bcryptjs";
+import { Wallet } from "../modules/wallet/wallet.model";
 
 passport.use(
   new LocalStrategy(
@@ -108,6 +109,12 @@ passport.use(
                 providerId: profile.id,
               },
             ],
+          });
+          await Wallet.create({
+            user: isUserExist._id,
+            balance: 50,
+            currency: "BDT",
+            status: "active",
           });
 
           (isUserExist as any)._newUser = true; // still mark as new

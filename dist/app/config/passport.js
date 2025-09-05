@@ -20,6 +20,7 @@ const user_model_1 = require("../modules/user/user.model");
 const user_interface_1 = require("../modules/user/user.interface");
 const passport_local_1 = require("passport-local");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const wallet_model_1 = require("../modules/wallet/wallet.model");
 passport_1.default.use(new passport_local_1.Strategy({
     usernameField: "email",
     passwordField: "password",
@@ -86,6 +87,12 @@ passport_1.default.use(new passport_google_oauth20_1.Strategy({
                         providerId: profile.id,
                     },
                 ],
+            });
+            yield wallet_model_1.Wallet.create({
+                user: isUserExist._id,
+                balance: 50,
+                currency: "BDT",
+                status: "active",
             });
             isUserExist._newUser = true; // still mark as new
         }
