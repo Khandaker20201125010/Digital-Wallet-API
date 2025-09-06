@@ -47,6 +47,10 @@ const changePassword = (oldPassword, newPassword, decodedToken) => __awaiter(voi
     if (!user) {
         throw new appError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
     }
+    // 🚨 If no password exists, tell user to use "set password"
+    if (!user.password) {
+        throw new appError_1.default(http_status_codes_1.default.BAD_REQUEST, "No existing password. Please set a new password instead.");
+    }
     const isOldPasswordMatch = yield bcryptjs_1.default.compare(oldPassword, user.password);
     if (!isOldPasswordMatch) {
         throw new appError_1.default(http_status_codes_1.default.UNAUTHORIZED, "Old password does not match");

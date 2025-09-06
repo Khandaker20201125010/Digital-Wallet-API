@@ -54,21 +54,27 @@ const changePassword = async (
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
+  // 🚨 If no password exists, tell user to use "set password"
+  if (!user.password) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "No existing password. Please set a new password instead."
+    );
+  }
+
   const isOldPasswordMatch = await bcryptjs.compare(
     oldPassword,
-    user.password as string
+    user.password
   );
+
   if (!isOldPasswordMatch) {
     throw new AppError(httpStatus.UNAUTHORIZED, "Old password does not match");
   }
 
-  user.password = await bcryptjs.hash(
-    newPassword,
-    Number(envVars.BCRYPT_SALT_ROUND)
-  );
-
+  user.password = await bcryptjs.hash(newPassword, Number(envVars.BCRYPT_SALT_ROUND));
   await user.save();
 };
+
 
 
 const setPassword = async (userId: string, plainPassword: string) => {

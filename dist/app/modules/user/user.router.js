@@ -14,4 +14,5 @@ router.get("/me", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.R
 router.patch("/me", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), multer_config_1.multerUpload.single("picture"), user_controller_1.userController.updateUser);
 router.get("/all-users", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), user_controller_1.userController.getAllUsers);
 router.patch("/:id", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), multer_config_1.multerUpload.single("picture"), (0, validateRequest_1.validateRequest)(user_validation_1.updateUserZodSchema), user_controller_1.userController.updateUser);
+router.get("/search", (0, checkAuth_1.checkAuth)(user_interface_1.Role.USER, user_interface_1.Role.AGENT, user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), user_controller_1.userController.searchUsersByEmail);
 exports.userRoutes = router;

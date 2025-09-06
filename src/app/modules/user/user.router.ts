@@ -32,5 +32,6 @@ router.patch(
   validateRequest(updateUserZodSchema),
   userController.updateUser
 );
+router.get("/search", checkAuth(Role.USER, Role.AGENT, Role.ADMIN, Role.SUPER_ADMIN), userController.searchUsersByEmail);
 
 export const userRoutes = router;

@@ -4,7 +4,7 @@ import { TransactionService } from "./transaction.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status-codes";
 
-// transaction.controller.ts
+//  CREATE TRANSACTION 
 const createTransaction = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as { userId: string; role: string };
 
@@ -26,12 +26,20 @@ const createTransaction = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
-
+// MY TRANSACTIONS 
 const getMyTransactions = catchAsync(async (req: Request, res: Response) => {
   const userId = (req.user as { userId: string }).userId;
 
-  const result = await TransactionService.getMyTransactions(userId);
+  const page = Number(req.query.page ?? 1);
+  const limit = Number(req.query.limit ?? 10);
+  const type = req.query.type as string | undefined;
+  const startDate = req.query.startDate as string | undefined;
+  const endDate = req.query.endDate as string | undefined;
+
+  const filters = { type, startDate, endDate };
+
+  const result = await TransactionService.getMyTransactions(userId, filters, page, limit);
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -40,8 +48,17 @@ const getMyTransactions = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// ADMIN/AGENT ALL TRANSACTIONS 
 const getAllTransactions = catchAsync(async (req: Request, res: Response) => {
-  const result = await TransactionService.getAllTransactions();
+  const page = Number(req.query.page ?? 1);
+  const limit = Number(req.query.limit ?? 20);
+  const type = req.query.type as string | undefined;
+  const startDate = req.query.startDate as string | undefined;
+  const endDate = req.query.endDate as string | undefined;
+
+  const filters = { type, startDate, endDate };
+
+  const result = await TransactionService.getAllTransactions(filters, page, limit);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

@@ -13,19 +13,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TransactionService = void 0;
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const mongoose_1 = __importDefault(require("mongoose"));
 const wallet_model_1 = require("../wallet/wallet.model");
 const transaction_model_1 = require("./transaction.model");
 const feeCalculator_1 = require("../../utils/feeCalculator");
 const notifier_1 = require("../../utils/notifier");
-// transaction.service.ts
 const createTransaction = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const session = yield mongoose_1.default.startSession();
     session.startTransaction();
     try {
         const { from, to, amount, type, initiatedBy, initiatedRole, reference } = payload;
         if (!initiatedBy || !initiatedRole || !reference) {
-            throw new Error("Missing required transaction metadata (initiatedBy, role, or reference)");
+            throw new Error("Missing required transaction metadata");
         }
         const senderWallet = yield wallet_model_1.Wallet.findOne({ user: from }).session(session);
         if (!senderWallet)
@@ -33,32 +33,40 @@ const createTransaction = (payload) => __awaiter(void 0, void 0, void 0, functio
         if (senderWallet.status === "blocked")
             throw new Error("Sender wallet is blocked");
         const userWallet = to ? yield wallet_model_1.Wallet.findOne({ user: to }).session(session) : null;
-        // Fee depends on role
+        if (userWallet && userWallet.status === "blocked") {
+            throw new Error("Target wallet is blocked");
+        }
+        // Calculate fee
         const fee = (0, feeCalculator_1.calculateFee)(type, amount, initiatedRole);
-        // Handle different cases
-        if (type === "cash_out") {
+        // ---------------- USER WITHDRAW ----------------
+        if (type === "withdraw") {
+            if (senderWallet.balance < amount + fee)
+                throw new Error("Insufficient balance");
+            senderWallet.balance -= (amount + fee);
+            yield senderWallet.save({ session });
+        }
+        // ---------------- AGENT CASH-OUT ----------------
+        else if (type === "cash_out") {
             if (!userWallet)
-                throw new Error("Target user is required for cash_out");
-            if (userWallet.status === "blocked")
-                throw new Error("Target user's wallet is blocked");
+                throw new Error("Target user required for cash_out");
             if (userWallet.balance < amount)
                 throw new Error("User has insufficient balance");
-            // Deduct only from user
+            // Deduct from user wallet
             userWallet.balance -= amount;
             yield userWallet.save({ session });
-            // Deduct fee from agent if agent is performing withdrawal
-            if (initiatedRole === "agent" && senderWallet.user.toString() !== (to === null || to === void 0 ? void 0 : to.toString())) {
+            // Agent pays fee (optional rule)
+            if (initiatedRole === "agent") {
                 if (senderWallet.balance < fee)
                     throw new Error("Agent has insufficient balance for fee");
                 senderWallet.balance -= fee;
                 yield senderWallet.save({ session });
             }
         }
-        // Other transaction types (add_money, send, etc.)
-        if (["send", "add_money", "cash_in", "withdraw"].includes(type)) {
+        // ---------------- CASH-IN / SEND / ADD-MONEY ----------------
+        else if (["cash_in", "add_money", "send"].includes(type)) {
             let totalDebit = amount;
             if (initiatedRole === "user")
-                totalDebit += fee; // fee for user
+                totalDebit += fee;
             if (senderWallet.balance < totalDebit)
                 throw new Error("Insufficient balance including fee");
             senderWallet.balance -= totalDebit;
@@ -71,6 +79,7 @@ const createTransaction = (payload) => __awaiter(void 0, void 0, void 0, functio
                 yield receiverWallet.save({ session });
             }
         }
+        // ---------------- RECORD TRANSACTION ----------------
         const transaction = yield transaction_model_1.Transaction.create([Object.assign(Object.assign({}, payload), { fee })], { session });
         (0, notifier_1.notify)(from.toString(), `Transaction of ${amount} (${type}) successful. Fee: ${fee}`);
         if (to && ["send", "cash_in", "add_money"].includes(type)) {
@@ -86,15 +95,42 @@ const createTransaction = (payload) => __awaiter(void 0, void 0, void 0, functio
         throw error;
     }
 });
-const getMyTransactions = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield transaction_model_1.Transaction.find({
+const getMyTransactions = (userId_1, filters_1, ...args_1) => __awaiter(void 0, [userId_1, filters_1, ...args_1], void 0, function* (userId, filters, page = 1, limit = 10) {
+    const query = {
         $or: [{ from: userId }, { to: userId }],
-    }).sort({ createdAt: -1 });
+    };
+    if (filters.type)
+        query.type = filters.type;
+    if (filters.startDate && filters.endDate) {
+        query.createdAt = {
+            $gte: new Date(filters.startDate),
+            $lte: new Date(filters.endDate),
+        };
+    }
+    const transactions = yield transaction_model_1.Transaction.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+    const total = yield transaction_model_1.Transaction.countDocuments(query);
+    return { transactions, total, page, limit };
 });
-const getAllTransactions = () => __awaiter(void 0, void 0, void 0, function* () {
-    return yield transaction_model_1.Transaction.find()
+const getAllTransactions = (filters_1, ...args_1) => __awaiter(void 0, [filters_1, ...args_1], void 0, function* (filters, page = 1, limit = 20) {
+    const query = {};
+    if (filters.type)
+        query.type = filters.type;
+    if (filters.startDate && filters.endDate) {
+        query.createdAt = {
+            $gte: new Date(filters.startDate),
+            $lte: new Date(filters.endDate),
+        };
+    }
+    const transactions = yield transaction_model_1.Transaction.find(query)
         .populate("from to", "name email")
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+    const total = yield transaction_model_1.Transaction.countDocuments(query);
+    return { transactions, total, page, limit };
 });
 exports.TransactionService = {
     createTransaction,

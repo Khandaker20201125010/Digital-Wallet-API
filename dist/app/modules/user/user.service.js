@@ -94,9 +94,18 @@ const getMe = (userId) => __awaiter(void 0, void 0, void 0, function* () {
         data: user
     };
 });
+const searchByEmail = (email) => __awaiter(void 0, void 0, void 0, function* () {
+    // simple starts-with / contains search (case-insensitive)
+    const regex = new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    return user_model_1.User.find({ email: regex })
+        .select("_id name email")
+        .limit(10)
+        .lean();
+});
 exports.UserService = {
     createUser,
     getAllUsers,
     updateUser,
     getMe,
+    searchByEmail,
 };

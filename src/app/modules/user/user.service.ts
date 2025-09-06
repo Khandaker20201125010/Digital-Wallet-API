@@ -97,6 +97,14 @@ const getMe = async (userId: string) => {
         data: user
     }
 };
+const searchByEmail = async (email: string) => {
+  // simple starts-with / contains search (case-insensitive)
+  const regex = new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  return User.find({ email: regex })
+    .select("_id name email")
+    .limit(10)
+    .lean();
+};
 
 
 export const UserService = {
@@ -104,4 +112,5 @@ export const UserService = {
   getAllUsers,
   updateUser,
   getMe,
+  searchByEmail,
 };

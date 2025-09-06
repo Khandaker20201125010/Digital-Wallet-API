@@ -76,10 +76,29 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
     data: result.data,
   });
 });
+const searchUsersByEmail = catchAsync(async (req: Request, res: Response) => {
+  const email = String(req.query.email || "").trim();
+  if (!email) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "Email query is required",
+    });
+  }
+
+  const users = await UserService.searchByEmail(email); // returns array of {_id, name, email}
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Users matching email retrieved",
+    data: users,
+  });
+});
 
 export const userController = {
   createUser,
   getAllUsers,
   updateUser,
   getMe,
+  searchUsersByEmail,
 };

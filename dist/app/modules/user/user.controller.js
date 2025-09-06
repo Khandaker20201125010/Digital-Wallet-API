@@ -74,9 +74,27 @@ const getMe = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 
         data: result.data,
     });
 }));
+const searchUsersByEmail = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const email = String(req.query.email || "").trim();
+    if (!email) {
+        return (0, sendResponse_1.sendResponse)(res, {
+            statusCode: http_status_codes_1.default.BAD_REQUEST,
+            success: false,
+            message: "Email query is required",
+        });
+    }
+    const users = yield user_service_1.UserService.searchByEmail(email); // returns array of {_id, name, email}
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Users matching email retrieved",
+        data: users,
+    });
+}));
 exports.userController = {
     createUser,
     getAllUsers,
     updateUser,
     getMe,
+    searchUsersByEmail,
 };
