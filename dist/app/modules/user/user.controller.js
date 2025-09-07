@@ -55,13 +55,18 @@ const updateUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, 
 }));
 // Get all users
 const getAllUsers = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield user_service_1.UserService.getAllUsers();
+    const { role, isActive, search, isApproved } = req.query;
+    const result = yield user_service_1.UserService.getAllUsers({
+        role: String(role || ""),
+        isApproved: String(isApproved || ""),
+        isActive: String(isActive || ""),
+        search: String(search || ""),
+    });
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
-        message: "All Users Retrieved Successfully",
-        statusCode: http_status_codes_1.default.CREATED,
+        message: "Filtered Users Retrieved Successfully",
+        statusCode: http_status_codes_1.default.OK,
         data: result.data,
-        meta: result.meta,
     });
 }));
 const getMe = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

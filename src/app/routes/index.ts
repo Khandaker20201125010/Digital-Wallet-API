@@ -4,6 +4,7 @@ import { AuthRoutes } from "../modules/auth/auth.route";
 import { WalletRoutes } from "../modules/wallet/wallet.route";
 import { TransactionRoutes } from "../modules/transaction/transaction.route";
 import { OtpRoutes } from "../modules/otp/otp.route";
+import { DepositRequestRoutes } from "../modules/depositRequest/depositRequest.routes";
 
 export const router = Router();
 
@@ -27,6 +28,10 @@ const moduleRoutes = [
   {
     path: "/otp",
     route: OtpRoutes,
+  },
+{
+    path: "/deposit-requests",  
+    route: DepositRequestRoutes,
   },
 ];
 

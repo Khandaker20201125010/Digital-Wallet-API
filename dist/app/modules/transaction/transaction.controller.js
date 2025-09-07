@@ -48,14 +48,18 @@ const getMyTransactions = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(v
     });
 }));
 // ADMIN/AGENT ALL TRANSACTIONS 
+// transaction.controller.ts
 const getAllTransactions = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const page = Number((_a = req.query.page) !== null && _a !== void 0 ? _a : 1);
     const limit = Number((_b = req.query.limit) !== null && _b !== void 0 ? _b : 20);
     const type = req.query.type;
+    const status = req.query.status;
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
-    const filters = { type, startDate, endDate };
+    const minAmount = req.query.minAmount ? Number(req.query.minAmount) : undefined;
+    const maxAmount = req.query.maxAmount ? Number(req.query.maxAmount) : undefined;
+    const filters = { type, status, startDate, endDate, minAmount, maxAmount };
     const result = yield transaction_service_1.TransactionService.getAllTransactions(filters, page, limit);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: http_status_codes_1.default.OK,

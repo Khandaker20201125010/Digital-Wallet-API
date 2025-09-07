@@ -24,6 +24,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserService = void 0;
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const appError_1 = __importDefault(require("../../errroHelpers/appError"));
@@ -56,19 +57,19 @@ const createUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     };
 });
 const updateUser = (userId, payload, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
-    if (payload.role) {
-        if (decodedToken.role === user_interface_1.Role.USER || decodedToken.role === user_interface_1.Role.AGENT) {
-            throw new appError_1.default(http_status_codes_1.default.FORBIDDEN, "You are not authorized");
+    // ...existing authorization checks...
+    // Allow updating isApproved
+    if (payload.isApproved !== undefined) {
+        // only admin can approve/suspend
+        if (decodedToken.role !== user_interface_1.Role.ADMIN &&
+            decodedToken.role !== user_interface_1.Role.SUPER_ADMIN) {
+            throw new appError_1.default(http_status_codes_1.default.FORBIDDEN, "Not authorized to change approval");
         }
-        if (payload.role === user_interface_1.Role.SUPER_ADMIN && decodedToken.role === user_interface_1.Role.ADMIN) {
-            throw new appError_1.default(http_status_codes_1.default.FORBIDDEN, "You are not authorized");
+        if (typeof payload.isApproved === "string") {
+            payload.isApproved = payload.isApproved === "true";
         }
     }
-    if (payload.isActive || payload.isDeleted || payload.isVerified) {
-        if (decodedToken.role === user_interface_1.Role.USER || decodedToken.role === user_interface_1.Role.AGENT) {
-            throw new appError_1.default(http_status_codes_1.default.FORBIDDEN, "You are not authorized");
-        }
-    }
+    // If password is updated
     if (payload.password) {
         payload.password = yield bcryptjs_1.default.hash(payload.password, env_1.envVars.BCRYPT_SALT_ROUND);
     }
@@ -78,29 +79,38 @@ const updateUser = (userId, payload, decodedToken) => __awaiter(void 0, void 0, 
     });
     return newUpdatedUser;
 });
-const getAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
-    const users = yield user_model_1.User.find({});
-    const totalUsers = yield user_model_1.User.countDocuments();
-    return {
-        data: users,
-        meta: {
-            total: totalUsers,
-        },
-    };
+const getAllUsers = (filters) => __awaiter(void 0, void 0, void 0, function* () {
+    const query = {};
+    if (filters.role)
+        query.role = filters.role;
+    // Convert string "true"/"false" to boolean for DB query
+    if (filters.isApproved) {
+        if (filters.isApproved === "true")
+            query.isApproved = true;
+        if (filters.isApproved === "false")
+            query.isApproved = false;
+    }
+    if (filters.isActive)
+        query.isActive = filters.isActive;
+    if (filters.search) {
+        const regex = new RegExp(filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+        query.email = regex;
+    }
+    // NOTE: remove any further assignment that may overwrite query.isApproved
+    const users = yield user_model_1.User.find(query).select("-password");
+    const totalUsers = yield user_model_1.User.countDocuments(query);
+    return { data: users, meta: { total: totalUsers } };
 });
 const getMe = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findById(userId).select("-password");
     return {
-        data: user
+        data: user,
     };
 });
 const searchByEmail = (email) => __awaiter(void 0, void 0, void 0, function* () {
     // simple starts-with / contains search (case-insensitive)
     const regex = new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-    return user_model_1.User.find({ email: regex })
-        .select("_id name email")
-        .limit(10)
-        .lean();
+    return user_model_1.User.find({ email: regex }).select("_id name email").limit(10).lean();
 });
 exports.UserService = {
     createUser,

@@ -54,14 +54,19 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
 // Get all users
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserService.getAllUsers();
+  const { role, isActive, search , isApproved } = req.query;
+  const result = await UserService.getAllUsers({
+    role: String(role || ""),
+    isApproved: String(isApproved || ""),
+    isActive: String(isActive || ""),
+    search: String(search || ""),
+  });
 
   sendResponse(res, {
     success: true,
-    message: "All Users Retrieved Successfully",
-    statusCode: httpStatus.CREATED,
+    message: "Filtered Users Retrieved Successfully",
+    statusCode: httpStatus.OK,
     data: result.data,
-    meta: result.meta,
   });
 });
 

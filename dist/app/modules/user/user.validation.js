@@ -69,6 +69,7 @@ exports.updateUserZodSchema = zod_1.default.object({
     isVerified: zod_1.default
         .boolean({ invalid_type_error: "isVerified must be true or false" })
         .optional(),
+    isApproved: zod_1.default.union([zod_1.default.boolean(), zod_1.default.string()]).optional(),
     address: zod_1.default
         .string({ invalid_type_error: "Address must be string" })
         .max(200, { message: "Address cannot exceed 200 characters." })

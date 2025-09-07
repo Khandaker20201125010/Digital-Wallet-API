@@ -114,15 +114,25 @@ const getMyTransactions = (userId_1, filters_1, ...args_1) => __awaiter(void 0, 
     const total = yield transaction_model_1.Transaction.countDocuments(query);
     return { transactions, total, page, limit };
 });
-const getAllTransactions = (filters_1, ...args_1) => __awaiter(void 0, [filters_1, ...args_1], void 0, function* (filters, page = 1, limit = 20) {
+// transaction.service.ts
+const getAllTransactions = (filters_1, ...args_1) => __awaiter(void 0, [filters_1, ...args_1], void 0, function* (filters, page = 1, limit = 10) {
     const query = {};
     if (filters.type)
         query.type = filters.type;
+    if (filters.status)
+        query.status = filters.status;
     if (filters.startDate && filters.endDate) {
         query.createdAt = {
             $gte: new Date(filters.startDate),
             $lte: new Date(filters.endDate),
         };
+    }
+    if (filters.minAmount !== undefined || filters.maxAmount !== undefined) {
+        query.amount = {};
+        if (filters.minAmount !== undefined)
+            query.amount.$gte = filters.minAmount;
+        if (filters.maxAmount !== undefined)
+            query.amount.$lte = filters.maxAmount;
     }
     const transactions = yield transaction_model_1.Transaction.find(query)
         .populate("from to", "name email")

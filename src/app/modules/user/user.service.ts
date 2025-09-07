@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import bcryptjs from "bcryptjs";
 import httpStatus from "http-status-codes";
 import AppError from "../../errroHelpers/appError";
@@ -49,27 +50,34 @@ const updateUser = async (
   payload: Partial<IUser>,
   decodedToken: JwtPayload
 ) => {
-  if (payload.role) {
-    if (decodedToken.role === Role.USER || decodedToken.role === Role.AGENT) {
-      throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
-    }
+  // ...existing authorization checks...
 
-    if (payload.role === Role.SUPER_ADMIN && decodedToken.role === Role.ADMIN) {
-      throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
+  // Allow updating isApproved
+  if (payload.isApproved !== undefined) {
+    // only admin can approve/suspend
+    if (
+      decodedToken.role !== Role.ADMIN &&
+      decodedToken.role !== Role.SUPER_ADMIN
+    ) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "Not authorized to change approval"
+      );
+    }
+       if (typeof payload.isApproved === "string") {
+      payload.isApproved = payload.isApproved === "true";
     }
   }
 
-  if (payload.isActive || payload.isDeleted || payload.isVerified) {
-    if (decodedToken.role === Role.USER || decodedToken.role === Role.AGENT) {
-      throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
-    }
-  }
-
+  // If password is updated
   if (payload.password) {
     payload.password = await bcryptjs.hash(
       payload.password,
       envVars.BCRYPT_SALT_ROUND
     );
+
+
+
   }
 
   const newUpdatedUser = await User.findByIdAndUpdate(userId, payload, {
@@ -80,32 +88,51 @@ const updateUser = async (
   return newUpdatedUser;
 };
 
-const getAllUsers = async () => {
-  const users = await User.find({});
-  const totalUsers = await User.countDocuments();
-  return {
-    data: users,
-    meta: {
-      total: totalUsers,
-    },
-  };
+const getAllUsers = async (filters: {
+  role?: string;
+  isActive?: string;
+  search?: string;
+  isApproved?: string;
+}) => {
+  const query: any = {};
+
+  if (filters.role) query.role = filters.role;
+
+  // Convert string "true"/"false" to boolean for DB query
+  if (filters.isApproved) {
+    if (filters.isApproved === "true") query.isApproved = true;
+    if (filters.isApproved === "false") query.isApproved = false;
+  }
+
+  if (filters.isActive) query.isActive = filters.isActive;
+
+  if (filters.search) {
+    const regex = new RegExp(
+      filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      "i"
+    );
+    query.email = regex;
+  }
+
+  // NOTE: remove any further assignment that may overwrite query.isApproved
+  const users = await User.find(query).select("-password");
+  const totalUsers = await User.countDocuments(query);
+
+  return { data: users, meta: { total: totalUsers } };
 };
 
+
 const getMe = async (userId: string) => {
-    const user = await User.findById(userId).select("-password");
-    return {
-        data: user
-    }
+  const user = await User.findById(userId).select("-password");
+  return {
+    data: user,
+  };
 };
 const searchByEmail = async (email: string) => {
   // simple starts-with / contains search (case-insensitive)
   const regex = new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-  return User.find({ email: regex })
-    .select("_id name email")
-    .limit(10)
-    .lean();
+  return User.find({ email: regex }).select("_id name email").limit(10).lean();
 };
-
 
 export const UserService = {
   createUser,

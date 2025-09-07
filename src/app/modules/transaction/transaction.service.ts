@@ -11,7 +11,8 @@ const createTransaction = async (payload: ITransaction) => {
   session.startTransaction();
 
   try {
-    const { from, to, amount, type, initiatedBy, initiatedRole, reference } = payload;
+    const { from, to, amount, type, initiatedBy, initiatedRole, reference } =
+      payload;
 
     if (!initiatedBy || !initiatedRole || !reference) {
       throw new Error("Missing required transaction metadata");
@@ -19,9 +20,12 @@ const createTransaction = async (payload: ITransaction) => {
 
     const senderWallet = await Wallet.findOne({ user: from }).session(session);
     if (!senderWallet) throw new Error("Sender wallet not found");
-    if (senderWallet.status === "blocked") throw new Error("Sender wallet is blocked");
+    if (senderWallet.status === "blocked")
+      throw new Error("Sender wallet is blocked");
 
-    const userWallet = to ? await Wallet.findOne({ user: to }).session(session) : null;
+    const userWallet = to
+      ? await Wallet.findOne({ user: to }).session(session)
+      : null;
     if (userWallet && userWallet.status === "blocked") {
       throw new Error("Target wallet is blocked");
     }
@@ -31,15 +35,17 @@ const createTransaction = async (payload: ITransaction) => {
 
     // ---------------- USER WITHDRAW ----------------
     if (type === "withdraw") {
-      if (senderWallet.balance < amount + fee) throw new Error("Insufficient balance");
-      senderWallet.balance -= (amount + fee);
+      if (senderWallet.balance < amount + fee)
+        throw new Error("Insufficient balance");
+      senderWallet.balance -= amount + fee;
       await senderWallet.save({ session });
     }
 
     // ---------------- AGENT CASH-OUT ----------------
     else if (type === "cash_out") {
       if (!userWallet) throw new Error("Target user required for cash_out");
-      if (userWallet.balance < amount) throw new Error("User has insufficient balance");
+      if (userWallet.balance < amount)
+        throw new Error("User has insufficient balance");
 
       // Deduct from user wallet
       userWallet.balance -= amount;
@@ -47,7 +53,8 @@ const createTransaction = async (payload: ITransaction) => {
 
       // Agent pays fee (optional rule)
       if (initiatedRole === "agent") {
-        if (senderWallet.balance < fee) throw new Error("Agent has insufficient balance for fee");
+        if (senderWallet.balance < fee)
+          throw new Error("Agent has insufficient balance for fee");
         senderWallet.balance -= fee;
         await senderWallet.save({ session });
       }
@@ -58,12 +65,15 @@ const createTransaction = async (payload: ITransaction) => {
       let totalDebit = amount;
       if (initiatedRole === "user") totalDebit += fee;
 
-      if (senderWallet.balance < totalDebit) throw new Error("Insufficient balance including fee");
+      if (senderWallet.balance < totalDebit)
+        throw new Error("Insufficient balance including fee");
       senderWallet.balance -= totalDebit;
       await senderWallet.save({ session });
 
       if (to) {
-        const receiverWallet = await Wallet.findOne({ user: to }).session(session);
+        const receiverWallet = await Wallet.findOne({ user: to }).session(
+          session
+        );
         if (!receiverWallet) throw new Error("Receiver wallet not found");
         receiverWallet.balance += amount;
         await receiverWallet.save({ session });
@@ -71,9 +81,14 @@ const createTransaction = async (payload: ITransaction) => {
     }
 
     // ---------------- RECORD TRANSACTION ----------------
-    const transaction = await Transaction.create([{ ...payload, fee }], { session });
+    const transaction = await Transaction.create([{ ...payload, fee }], {
+      session,
+    });
 
-    notify(from.toString(), `Transaction of ${amount} (${type}) successful. Fee: ${fee}`);
+    notify(
+      from.toString(),
+      `Transaction of ${amount} (${type}) successful. Fee: ${fee}`
+    );
     if (to && ["send", "cash_in", "add_money"].includes(type)) {
       notify(to.toString(), `You received ₹${amount} via ${type}`);
     }
@@ -117,19 +132,33 @@ const getMyTransactions = async (
   return { transactions, total, page, limit };
 };
 
+// transaction.service.ts
 const getAllTransactions = async (
-  filters: { type?: string; startDate?: string; endDate?: string },
+  filters: {
+    type?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    minAmount?: number;
+    maxAmount?: number;
+  },
   page = 1,
-  limit = 20
+  limit = 10
 ) => {
   const query: any = {};
 
   if (filters.type) query.type = filters.type;
+  if (filters.status) query.status = filters.status;
   if (filters.startDate && filters.endDate) {
     query.createdAt = {
       $gte: new Date(filters.startDate),
       $lte: new Date(filters.endDate),
     };
+  }
+  if (filters.minAmount !== undefined || filters.maxAmount !== undefined) {
+    query.amount = {};
+    if (filters.minAmount !== undefined) query.amount.$gte = filters.minAmount;
+    if (filters.maxAmount !== undefined) query.amount.$lte = filters.maxAmount;
   }
 
   const transactions = await Transaction.find(query)

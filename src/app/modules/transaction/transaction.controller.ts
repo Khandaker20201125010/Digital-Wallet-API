@@ -49,14 +49,18 @@ const getMyTransactions = catchAsync(async (req: Request, res: Response) => {
 });
 
 // ADMIN/AGENT ALL TRANSACTIONS 
+// transaction.controller.ts
 const getAllTransactions = catchAsync(async (req: Request, res: Response) => {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 20);
   const type = req.query.type as string | undefined;
+  const status = req.query.status as string | undefined;
   const startDate = req.query.startDate as string | undefined;
   const endDate = req.query.endDate as string | undefined;
+  const minAmount = req.query.minAmount ? Number(req.query.minAmount) : undefined;
+  const maxAmount = req.query.maxAmount ? Number(req.query.maxAmount) : undefined;
 
-  const filters = { type, startDate, endDate };
+  const filters = { type, status, startDate, endDate, minAmount, maxAmount };
 
   const result = await TransactionService.getAllTransactions(filters, page, limit);
 
@@ -67,6 +71,7 @@ const getAllTransactions = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
 
 export const TransactionController = {
   createTransaction,
