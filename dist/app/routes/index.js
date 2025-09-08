@@ -8,6 +8,7 @@ const wallet_route_1 = require("../modules/wallet/wallet.route");
 const transaction_route_1 = require("../modules/transaction/transaction.route");
 const otp_route_1 = require("../modules/otp/otp.route");
 const depositRequest_routes_1 = require("../modules/depositRequest/depositRequest.routes");
+const contact_route_1 = require("../modules/Contacts/contact.route");
 exports.router = (0, express_1.Router)();
 const moduleRoutes = [
     {
@@ -34,6 +35,7 @@ const moduleRoutes = [
         path: "/deposit-requests",
         route: depositRequest_routes_1.DepositRequestRoutes,
     },
+    { path: "/contact", route: contact_route_1.ContactRoutes },
 ];
 moduleRoutes.forEach((route) => {
     exports.router.use(route.path, route.route);

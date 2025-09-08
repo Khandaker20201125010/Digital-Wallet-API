@@ -32,7 +32,9 @@ const createTransaction = (payload) => __awaiter(void 0, void 0, void 0, functio
             throw new Error("Sender wallet not found");
         if (senderWallet.status === "blocked")
             throw new Error("Sender wallet is blocked");
-        const userWallet = to ? yield wallet_model_1.Wallet.findOne({ user: to }).session(session) : null;
+        const userWallet = to
+            ? yield wallet_model_1.Wallet.findOne({ user: to }).session(session)
+            : null;
         if (userWallet && userWallet.status === "blocked") {
             throw new Error("Target wallet is blocked");
         }
@@ -42,7 +44,7 @@ const createTransaction = (payload) => __awaiter(void 0, void 0, void 0, functio
         if (type === "withdraw") {
             if (senderWallet.balance < amount + fee)
                 throw new Error("Insufficient balance");
-            senderWallet.balance -= (amount + fee);
+            senderWallet.balance -= amount + fee;
             yield senderWallet.save({ session });
         }
         // ---------------- AGENT CASH-OUT ----------------
@@ -80,7 +82,9 @@ const createTransaction = (payload) => __awaiter(void 0, void 0, void 0, functio
             }
         }
         // ---------------- RECORD TRANSACTION ----------------
-        const transaction = yield transaction_model_1.Transaction.create([Object.assign(Object.assign({}, payload), { fee })], { session });
+        const transaction = yield transaction_model_1.Transaction.create([Object.assign(Object.assign({}, payload), { fee })], {
+            session,
+        });
         (0, notifier_1.notify)(from.toString(), `Transaction of ${amount} (${type}) successful. Fee: ${fee}`);
         if (to && ["send", "cash_in", "add_money"].includes(type)) {
             (0, notifier_1.notify)(to.toString(), `You received ₹${amount} via ${type}`);

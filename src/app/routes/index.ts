@@ -5,6 +5,7 @@ import { WalletRoutes } from "../modules/wallet/wallet.route";
 import { TransactionRoutes } from "../modules/transaction/transaction.route";
 import { OtpRoutes } from "../modules/otp/otp.route";
 import { DepositRequestRoutes } from "../modules/depositRequest/depositRequest.routes";
+import { ContactRoutes } from "../modules/Contacts/contact.route";
 
 export const router = Router();
 
@@ -29,10 +30,11 @@ const moduleRoutes = [
     path: "/otp",
     route: OtpRoutes,
   },
-{
-    path: "/deposit-requests",  
+  {
+    path: "/deposit-requests",
     route: DepositRequestRoutes,
   },
+  { path: "/contact", route: ContactRoutes },
 ];
 
 moduleRoutes.forEach((route) => {
