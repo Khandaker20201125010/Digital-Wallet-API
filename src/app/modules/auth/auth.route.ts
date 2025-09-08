@@ -6,6 +6,7 @@ import passport from "passport";
 import "../../config/passport";
 const router = Router();
 
+router.patch("/select-role", AuthControllers.updateUserByEmail);
 router.post("/check-user", AuthControllers.checkUserExists);
 router.post("/login", AuthControllers.credentialsLogin);
 router.post("/refresh-token", AuthControllers.getNewAccessToken);

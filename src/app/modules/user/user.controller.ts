@@ -5,19 +5,30 @@ import { UserService } from "./user.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { JwtPayload } from "jsonwebtoken";
+import { setAuthCookie } from "../../utils/setCookie";
 
 
 // Create user
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
-  const user = await UserService.createUser(req.body);
+  const { user, wallet, tokens } = await UserService.createUser(req.body);
+
+  // Optionally set HttpOnly cookies
+  setAuthCookie(res, tokens);
+
   sendResponse(res, {
     success: true,
     message: "User created successfully",
     statusCode: httpStatus.CREATED,
-    data: user,
+    data: {
+      user,
+      wallet,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    },
   });
 });
+
 
 // Update user
 

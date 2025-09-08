@@ -7,6 +7,7 @@ import { User } from "./user.model";
 import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env";
 import { Wallet } from "../wallet/wallet.model";
+import { createUsersTokens } from "../../utils/usersTokens";
 
 const createUser = async (payload: Partial<IUser>) => {
   const { email, password, ...rest } = payload;
@@ -39,11 +40,16 @@ const createUser = async (payload: Partial<IUser>) => {
     });
   }
 
+  
+  const tokens = await createUsersTokens(user);
+
   return {
     user,
     wallet,
+    tokens,
   };
 };
+
 
 const updateUser = async (
   userId: string,

@@ -32,6 +32,7 @@ const user_interface_1 = require("./user.interface");
 const user_model_1 = require("./user.model");
 const env_1 = require("../../config/env");
 const wallet_model_1 = require("../wallet/wallet.model");
+const usersTokens_1 = require("../../utils/usersTokens");
 const createUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = payload, rest = __rest(payload, ["email", "password"]);
     const isUserExist = yield user_model_1.User.findOne({ email });
@@ -51,9 +52,11 @@ const createUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
             balance: 50,
         });
     }
+    const tokens = yield (0, usersTokens_1.createUsersTokens)(user);
     return {
         user,
         wallet,
+        tokens,
     };
 });
 const updateUser = (userId, payload, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {

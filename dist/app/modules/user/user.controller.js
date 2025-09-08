@@ -17,14 +17,22 @@ const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const user_service_1 = require("./user.service");
 const catchAsync_1 = require("../../utils/catchAsync");
 const sendResponse_1 = require("../../utils/sendResponse");
+const setCookie_1 = require("../../utils/setCookie");
 // Create user
 const createUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield user_service_1.UserService.createUser(req.body);
+    const { user, wallet, tokens } = yield user_service_1.UserService.createUser(req.body);
+    // Optionally set HttpOnly cookies
+    (0, setCookie_1.setAuthCookie)(res, tokens);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         message: "User created successfully",
         statusCode: http_status_codes_1.default.CREATED,
-        data: user,
+        data: {
+            user,
+            wallet,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+        },
     });
 }));
 // Update user
